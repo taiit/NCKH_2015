@@ -1,0 +1,19 @@
+===========================================================================================
+Using brushless DC motor
+http://www.instructables.com/id/Brushless-Gimbal-with-Arduino/?ALLSTEPS
+http://www.instructables.com/id/DIY-Brushless-Gimbal-with-Arduino-in-Japanese/?ALLSTEPS
+
+===========================================================================================
+How to coding for brushless motor? Using laptop DVD brushless motor.
+http://elabz.com/brushless-dc-motor-with-arduino/
+http://elabz.com/bldc-motor-with-arduino-circuit-and-software/
+
+===========================================================================================
+Using servo
+
+
+===========================================================================================
+Pro version
+
+
+https://www.kickstarter.com/projects/378402544/allsteady-6pro-dslr-3-axis-gimbal-stabilizer
