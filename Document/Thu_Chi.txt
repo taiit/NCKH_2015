@@ -1,0 +1,3 @@
+
+Date			LinhKien/ThietBi		Giá			Nguoi Mua		Note
+11-7-2015		3x Servo DS215MG		375*3 = 1125K		TuanTQ			SaigonHobby
