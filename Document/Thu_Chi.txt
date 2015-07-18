@@ -1,3 +1,8 @@
 
 Date			LinhKien/ThietBi		Giá			Nguoi Mua		Note
+
 11-7-2015		3x Servo DS215MG		375*3 = 1125K		TuanTQ			SaigonHobby
+13-07-2015		6x Bien tro 10k			15K			TaiVH
+18-07-2015		Borad 2 lop, In mach
+			Linh kien			192k			TaiVH			NhatTao
+18-07-2015		Cat lazer			40k			TaiVH			Ly Thuong Kiet
