@@ -6,3 +6,9 @@ Date			LinhKien/ThietBi		Giá			Nguoi Mua		Note
 18-07-2015		Borad 2 lop, In mach
 			Linh kien			192k			TaiVH			NhatTao
 18-07-2015		Cat lazer			40k			TaiVH			Ly Thuong Kiet
+
+22-07-1015		IC 595				8k
+			IC 7447				12k
+			In mach	+ led 7 seg		20k			TaiVH1			Bao Tin
+			
+24-07-2015		Module Ardunio pro mini		90k			TaiVH			Bao Tin
