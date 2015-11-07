@@ -9,6 +9,9 @@ Date			LinhKien/ThietBi		Giá			Nguoi Mua		Note
 
 22-07-1015		IC 595				8k
 			IC 7447				12k
-			In mach	+ led 7 seg		20k			TaiVH1			Bao Tin
+			In mach	+ led 7 seg		20k			TaiVH			Bao Tin
 			
 24-07-2015		Module Ardunio pro mini		90k			TaiVH			Bao Tin
+
+08-09-2015		IC Max6675			346k			TaiVH			thegioiic
+			In mach + linh kien		20k			TaiVH			baotin	
