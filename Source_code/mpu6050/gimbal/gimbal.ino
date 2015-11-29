@@ -23,7 +23,7 @@ float  alpha = DEFAULT_SENSOR_BETA; //alpha for filer
 //PID here
 pid_term_t pid_term[MAX_AXIS];
 //Define Variables we'll be connecting to
-float my_set_point[MAX_AXIS]{0,0,0}; //it like offset
+float my_set_point[MAX_AXIS]{-3, -4.5, 0}; //it like offset
 float my_input[MAX_AXIS]; //parse to angle after filter
 float my_output[MAX_AXIS];//parse to angle for servo after get pid
 pid pidControler[MAX_AXIS];//it is main PID
@@ -100,9 +100,22 @@ void setup(){
 			DIRECT				// non invert output
 		);
 		//pid term
-		pid_term[i].Kp = DEFAULT_PID_P_TERM; // Is default
-		pid_term[i].Ki = DEFAULT_PID_I_TERM; // Is default
-		pid_term[i].Kd = DEFAULT_PID_D_TERM; // Is default
+		if(i == AXIS_X){
+			pid_term[i].Kp = 1.059;		// Is default
+			pid_term[i].Ki = 0.0001;	// Is default
+			pid_term[i].Kd = 0.0025;		// Is default
+		}
+		if(i == AXIS_Y){
+			pid_term[i].Kp = 1.234;		// Is default
+			pid_term[i].Ki = 0.001;	// Is default
+			pid_term[i].Kd = 0.003;		// Is default
+		}
+		
+		if(i == AXIS_Z){
+			pid_term[i].Kp = 1.02;		// Is default
+			pid_term[i].Ki = 0.0;	// Is default
+			pid_term[i].Kd = 0.001;		// Is default
+		}
 		
 		pidControler[i].setPIDTunings(pid_term[i].Kp, pid_term[i].Ki, pid_term[i].Kd);
 				
@@ -113,6 +126,21 @@ void setup(){
 	
 }
 
+uint8_t x_change(float newData){	
+	static float x_old_angle = 0;	
+	float temp = newData - x_old_angle;	
+	x_old_angle = newData;
+	return abs((uint8_t)temp);	
+}
+
+uint8_t y_change(float newData){
+	static float y_old_angle = 0;
+	float temp = newData - y_old_angle;
+	y_old_angle = newData;
+	return abs((uint8_t)temp);
+}
+
+
 void loop(){
 	EVERYMS(10){
 		
@@ -120,38 +148,49 @@ void loop(){
 		
 		for(uint8_t i = 0; i < MAX_AXIS; i++){
 			my_input[i]  = g_lpf[i].LPF_Caculation(angle[i]);								
-		}
+		}		
 		
 	}//End EVERYMS
 	
 	// Like line follow robot :D
-	switch(abs((int)my_input[AXIS_X])){
+	switch(x_change(my_input[AXIS_X])){
 		case 1: // -1 < my_input < 1
-			pidControler[AXIS_X].setPIDTunings(
-				CUTDOWN(pid_term[AXIS_X].Kp, 0.6),
-				CUTDOWN(pid_term[AXIS_X].Ki, 1),
-				CUTDOWN(pid_term[AXIS_X].Kd, 1)
-			);
-			break;
 		case 2:
+		case 3:
+		case 4:
+		case 5:
 			pidControler[AXIS_X].setPIDTunings(
-				CUTDOWN(pid_term[AXIS_X].Kp, 0.5),
+				CUTDOWN(0, 0),
+				CUTDOWN(0, 0),
+				CUTDOWN(0, 0)
+			);
+			break;
+		case 6:
+		case 7:
+		case 8:
+		break;
+			pidControler[AXIS_X].setPIDTunings(
+				CUTDOWN(pid_term[AXIS_X].Kp, 0.7),
 				CUTDOWN(pid_term[AXIS_X].Ki, 1),
 				CUTDOWN(pid_term[AXIS_X].Kd, 1)
 			);
 			break;
-		case 3:
+		case 9:
+		case 10:
+		case 11:
 			pidControler[AXIS_X].setPIDTunings(
-			CUTDOWN(pid_term[AXIS_X].Kp, 0.3),
-			CUTDOWN(pid_term[AXIS_X].Ki, 0.3),
-			CUTDOWN(pid_term[AXIS_X].Kd, 0.3)
+			CUTDOWN(pid_term[AXIS_X].Kp, 0.5),
+			CUTDOWN(pid_term[AXIS_X].Ki, 1),
+			CUTDOWN(pid_term[AXIS_X].Kd, 1)
 			);
 			break;
-		case 4:
+		case 12:
+		case 13:
+		case 14:
 			pidControler[AXIS_X].setPIDTunings(
-				CUTDOWN(pid_term[AXIS_X].Kp, 0.2),
-				CUTDOWN(pid_term[AXIS_X].Ki, 0.2),
-				CUTDOWN(pid_term[AXIS_X].Kd, 0.2)
+				CUTDOWN(pid_term[AXIS_X].Kp, 0.3),
+				CUTDOWN(pid_term[AXIS_X].Ki, 0),
+				CUTDOWN(pid_term[AXIS_X].Kd, 0)
 			);
 			break;
 		default:
@@ -163,33 +202,43 @@ void loop(){
 			break;
 	}// end switch X
 	
-	switch(abs((int)my_input[AXIS_Y])){
+	switch(y_change(my_input[AXIS_Y])){
 		case 1:
+		case 2:
+		case 3:
+		case 4:
+		case 5:
+			pidControler[AXIS_Y].setPIDTunings(
+				CUTDOWN(0, 0),
+				CUTDOWN(0, 0),
+				CUTDOWN(0, 0)
+			);
+			break;
+		case 6:
+		case 7:
+		case 8:
+			pidControler[AXIS_Y].setPIDTunings(
+				CUTDOWN(pid_term[AXIS_Y].Kp, 0.6),
+				CUTDOWN(pid_term[AXIS_Y].Ki, 1),
+				CUTDOWN(pid_term[AXIS_Y].Kd, 1)
+			);
+			break;
+		case 9:
+		case 10:
+		case 11:
 			pidControler[AXIS_Y].setPIDTunings(
 				CUTDOWN(pid_term[AXIS_Y].Kp, 0.4),
-				CUTDOWN(pid_term[AXIS_Y].Ki, 0.4),
-				CUTDOWN(pid_term[AXIS_Y].Kd, 0.4)
+				CUTDOWN(pid_term[AXIS_Y].Ki, 0),
+				CUTDOWN(pid_term[AXIS_Y].Kd, 0)
 			);
 			break;
-		case 2:
+		case 12:
+		case 13:
+		case 14:
 			pidControler[AXIS_Y].setPIDTunings(
 				CUTDOWN(pid_term[AXIS_Y].Kp, 0.3),
-				CUTDOWN(pid_term[AXIS_Y].Ki, 0.3),
-				CUTDOWN(pid_term[AXIS_Y].Kd, 0.3)
-			);
-			break;
-		case 3:
-			pidControler[AXIS_Y].setPIDTunings(
-				CUTDOWN(pid_term[AXIS_Y].Kp, 0.2),
-				CUTDOWN(pid_term[AXIS_Y].Ki, 0.2),
-				CUTDOWN(pid_term[AXIS_Y].Kd, 0.2)
-			);
-			break;
-		case 4:
-			pidControler[AXIS_Y].setPIDTunings(
-				CUTDOWN(pid_term[AXIS_Y].Kp, 0.1),
-				CUTDOWN(pid_term[AXIS_Y].Ki, 0.1),
-				CUTDOWN(pid_term[AXIS_Y].Kd, 0.1)
+				CUTDOWN(pid_term[AXIS_Y].Ki, 0.0),
+				CUTDOWN(pid_term[AXIS_Y].Kd, 0.0)
 			);
 			break;
 		default:
@@ -199,7 +248,7 @@ void loop(){
 					CUTDOWN(pid_term[AXIS_Y].Kd, 0.0)
 				);
 			break;
-	}// end switch
+	}// end switch Y
 	
 	// Call pid
 	for(uint8_t i = 0; i < MAX_AXIS; i++){
@@ -209,12 +258,14 @@ void loop(){
 			switch(i){
 				case 0:
 					servo[AXIS_X].write(90 + temp); // X is 0
+					//Serial.println(90 /*+ temp*/);
 					break;
 				case 1:
 					servo[AXIS_Y].write(90 + temp); // Y is 1
 					break;
 				case 2:
-					servo[AXIS_Z].write(90 /*+ temp*/); // Z is 2
+					servo[AXIS_Z].write(90 - temp); // Z is 2
+					Serial.println(90 + temp);
 					break;
 			}// end switch
 			

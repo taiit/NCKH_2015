@@ -21,6 +21,8 @@
 extern "C" void __cxa_pure_virtual() {;}
 
 //
+uint8_t x_change(float newData);
+uint8_t y_change(float newData);
 //
 void out_settingdata();
 void SayHello();
