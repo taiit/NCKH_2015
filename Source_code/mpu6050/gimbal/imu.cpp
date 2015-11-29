@@ -80,7 +80,8 @@ static int read_gyro_accel_vals(uint8_t* accel_t_gyro_ptr) {
 // The sensor should be motionless on a horizontal surface
 //  while calibration is happening
 void calibrate_sensors() {
-	int                   num_readings = 10;
+	//int                   num_readings = 20;
+	int                   num_readings = 1;
 	float                 x_accel = 0;
 	float                 y_accel = 0;
 	float                 z_accel = 0;
@@ -89,7 +90,8 @@ void calibrate_sensors() {
 	float                 z_gyro = 0;
 	accel_t_gyro_union    accel_t_gyro;
 	
-	//Serial.println("Starting Calibration");
+	Serial.println(F(""));
+	Serial.println(F("Sensor Calibrating.."));
 
 	// Discard the first set of values read from the IMU
 	read_gyro_accel_vals((uint8_t *) &accel_t_gyro);
@@ -119,9 +121,24 @@ void calibrate_sensors() {
 	base_x_gyro = x_gyro;
 	base_y_gyro = y_gyro;
 	base_z_gyro = z_gyro;
+	// hard code
+	base_x_accel = 1164.40002;
+	base_y_accel = -625.40002;
+	base_z_accel = 17013.59960;
+	base_x_gyro = -222.30000;
+	base_y_gyro = -57.75000;
+	base_z_gyro = -122.90000;
 	
-	set_last_read_angle_data(micros(), 0, 0, 0, 0, 0, 0);	
-	Serial.println("Finishing Calibration");
+	set_last_read_angle_data(micros(), 0, 0, 0, 0, 0, 0);
+/*
+	Serial.print(F("base_x_accel: ")); Serial.println(base_x_accel,5);
+	Serial.print(F("base_y_accel: "));	Serial.println(base_y_accel,5);
+	Serial.print(F("base_z_accel: ")); Serial.println(base_z_accel,5);
+	Serial.print(F("base_x_gyro: ")); Serial.println(base_x_gyro,5);
+	Serial.print(F("base_y_gyro: "));	Serial.println(base_y_gyro,5);
+	Serial.print(F("base_z_gyro: ")); Serial.println(base_z_gyro,5);
+*/
+	Serial.println(F("Finishing Calibration"));
 }
 
 static void out_draw_data(accel_t_gyro_union accel_t_gyro){

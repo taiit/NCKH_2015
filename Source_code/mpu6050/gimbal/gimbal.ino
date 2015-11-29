@@ -10,14 +10,14 @@
 #include "gimbal.h"
 #include <Servo.h>
 #include "lpf.h"
+#include "SerialCommand.h"
 
-
+#define arduinoLED 13   // Arduino LED on board
+SerialCommand SCmd;   // The demo SerialCommand object
 float angle[MAX_AXIS];
-
 Servo servo[MAX_AXIS];
-
-
 LPF g_lpf[MAX_AXIS];
+float  alpha = DEFAULT_SENSOR_BETA; //alpha for filer
 
 void setup(){
 	int error;
@@ -38,7 +38,7 @@ void setup(){
 	//    The device is in sleep mode.
 	//
 	error = MPU6050_read (MPU6050_WHO_AM_I, &c, 1);
-	
+	Serial.println(F(""));
 	Serial.print(F("WHO_AM_I : "));
 	Serial.print(c,HEX);
 	Serial.print(F(", error = "));
@@ -65,9 +65,20 @@ void setup(){
 	servo[AXIS_Y].write(90);
 	servo[AXIS_Z].write(90);
 	
-	g_lpf[AXIS_X].setBeta(LPF_BETA_X);
-	g_lpf[AXIS_Y].setBeta(LPF_BETA_Y);
-	g_lpf[AXIS_Z].setBeta(LPF_BETA_Z);
+	g_lpf[AXIS_X].setBeta(DEFAULT_LPF_BETA_X);
+	g_lpf[AXIS_Y].setBeta(DEFAULT_LPF_BETA_Y);
+	g_lpf[AXIS_Z].setBeta(DEFAULT_LPF_BETA_Z);
+	//serial command
+	pinMode(arduinoLED,OUTPUT);      // Configure the onboard LED for output
+	digitalWrite(arduinoLED,LOW);    // default to LED off
+	// Setup callbacks for SerialCommand commands	
+	SCmd.addCommand("f",			LFP_2);  // setting filter angle
+	SCmd.addCommand("s",			SENSOR_FILER);  // setting filter angle
+	SCmd.addCommand("default",		default_setting);
+	SCmd.addCommand("stop",			stop);
+	SCmd.addCommand("start",		start);
+	SCmd.addDefaultHandler(			wtf);  // Handler for command that isn't matched  (says "What?")
+	
 }
 
 void loop(){
@@ -88,27 +99,140 @@ void loop(){
 		////}
 		//delay(15);
 	//}
-	filer_ter(micros());
-	
-	float lfp_data;
-	for(uint8_t i = 0; i < MAX_AXIS; i++){
-		lfp_data = g_lpf[i].LPF_Caculation(angle[i]);
-		switch(i){
-			case 0: //X
+	EVERYMS(10){
+		filer_ter(micros());
+		
+		float lfp_data;
+		for(uint8_t i = 0; i < MAX_AXIS; i++){
+			lfp_data = g_lpf[i].LPF_Caculation(angle[i]);
+			switch(i){
+				case 0: //X
 				servo[AXIS_X].write(90 - (int)lfp_data);
 				break;
-			case 1: //Y
+				case 1: //Y
 				servo[AXIS_Y].write(90 - (int)lfp_data);
 				break;
-			case 2: //Z
+				case 2: //Z
 				servo[AXIS_Z].write(90 /*+ (int)lfp_data*/);
 				break;
-		}
-	}
+			}
+		}//End for
+	}//End EVERYMS
 	
-	delay(10);
+	SCmd.readSerial();     // We don't do much, just process serial commands
+
+}
+//END LOOP
+void out_settingdata(){
+	Serial.print(F("sens alpha: "));	Serial.println(alpha);
+	Serial.print(F("LPF_BETA_X: "));	Serial.println(g_lpf[AXIS_X].getBeta());
+	Serial.print(F("LPF_BETA_Y: "));	Serial.println(g_lpf[AXIS_Y].getBeta());
+	Serial.print(F("LPF_BETA_Z: "));	Serial.println(g_lpf[AXIS_Z].getBeta());
+	Serial.println(F(""));
+}
+void SayHello(){
+	char *arg;
+	arg = SCmd.next();    // Get the next argument from the SerialCommand object buffer
+	if (arg != NULL){      // As long as it existed, take it
+	
+		Serial.print("Hello ");
+		Serial.println(arg);
+	}
+	else{
+		Serial.println(F("Hello, whoever you are"));
+	}
+}
+void start(){
+	for(uint8_t i = 0; i < MAX_AXIS; i++){
+		servo[i].attach(i+9);//pin 9, 10, 11
+	}
+}
+void stop(){
+	for(uint8_t i = 0; i < MAX_AXIS; i++){
+		servo[i].detach();
+	}
+}
+void LFP_2(){
+	
+	float fNum;
+	char *arg;
+//Filter X
+	arg = SCmd.next();
+	if (arg != NULL){
+		
+		fNum=atof(arg);    // Converts a char string to a float
+		g_lpf[AXIS_X].setBeta(fNum);
+	}
+	else {
+		Serial.println(F("No LPF_BETA_X"));
+	}
+//Filter Y
+	arg = SCmd.next();
+	if (arg != NULL){
+		fNum=atof(arg);    // Converts a char string to a float
+		g_lpf[AXIS_Y].setBeta(fNum);		
+	}
+	else {
+		Serial.println(F("No LPF_BETA_Y"));
+	}
+//Filter Z
+	arg = SCmd.next();
+	if (arg != NULL){
+		fNum=atof(arg);    // Converts a char string to a float
+		g_lpf[AXIS_Z].setBeta(fNum);		
+	}
+	else{
+		Serial.println(F("No LPF_BETA_Z"));
+	}	
+	out_settingdata();
 }
 
+void SENSOR_FILER(){
+	float fNum;
+	char *arg;
+	//Filter X
+	arg = SCmd.next();
+	if (arg != NULL){
+		fNum=atof(arg);    // Converts a char string to a float
+		alpha = fNum;
+	}
+	else{
+		Serial.println(F("No alpha"));
+	}
+	out_settingdata();
+}
+
+void default_setting(){
+	int iNum;
+	char *arg;
+	//Filter X
+	arg = SCmd.next();
+	if (arg != NULL){
+		switch(iNum){
+			
+			case 1:
+				break;
+			case 2:
+				break;
+			case  0:
+				alpha = DEFAULT_SENSOR_BETA;
+				g_lpf[AXIS_X].setBeta(DEFAULT_LPF_BETA_X);
+				g_lpf[AXIS_Y].setBeta(DEFAULT_LPF_BETA_Y);
+				g_lpf[AXIS_Z].setBeta(DEFAULT_LPF_BETA_Z);
+				Serial.println(F("Default Setting!"));
+				out_settingdata();
+				break;
+		}//end switch
+	}//end if
+}
+// This gets set as the default handler, and gets called when no other command matches.
+void wtf()
+{
+	Serial.println(F(""));
+	Serial.println(F("What do you want?"));
+//Print some importation
+	out_settingdata();
+}
 /*
 
 

@@ -17,6 +17,7 @@ class LPF{
 		LPF(float beta);
 		LPF();
 		void setBeta(float beta);
+		float getBeta();
 		//LPF: Y(n) = (1-ß)*Y(n-1) + (ß*X(n))) = Y(n-1) - (ß*(Y(n-1)-X(n)));
 		float LPF_Caculation(float draw_data);
 		void LPF_reset();

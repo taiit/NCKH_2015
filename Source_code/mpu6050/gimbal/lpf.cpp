@@ -18,6 +18,11 @@ void LPF::setBeta(float beta){
 	_LPF_Beta = beta;
 }
 
+float LPF::getBeta(){
+	return _LPF_Beta;
+}
+
+
 float LPF::LPF_Caculation(float raw_data){
 	_SmoothData = _SmoothData - (_LPF_Beta * (_SmoothData - raw_data));
 	return _SmoothData;

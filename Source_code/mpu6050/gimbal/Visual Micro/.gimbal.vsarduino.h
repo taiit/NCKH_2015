@@ -22,10 +22,20 @@ extern "C" void __cxa_pure_virtual() {;}
 
 //
 //
+void out_settingdata();
+void SayHello();
+void start();
+void stop();
+void LFP_2();
+void SENSOR_FILER();
+void default_setting();
+void wtf();
 
 #include "C:\Program Files\Arduino\hardware\arduino\avr\variants\standard\pins_arduino.h" 
 #include "C:\Program Files\Arduino\hardware\arduino\avr\cores\arduino\arduino.h"
 #include <gimbal.ino>
+#include <SerialCommand.cpp>
+#include <SerialCommand.h>
 #include <Wire.cpp>
 #include <Wire.h>
 #include <gimbal.h>
