@@ -30,6 +30,9 @@ void LFP_2();
 void SENSOR_FILER();
 void default_setting();
 void wtf();
+void oud_pidTermData(float Kp, float Ki, float Kd);
+void PIDX();
+void PIDY();
 
 #include "C:\Program Files\Arduino\hardware\arduino\avr\variants\standard\pins_arduino.h" 
 #include "C:\Program Files\Arduino\hardware\arduino\avr\cores\arduino\arduino.h"
@@ -46,5 +49,7 @@ void wtf();
 #include <mpu6050.cpp>
 #include <mpu6050.h>
 #include <mpu6050_register.h>
+#include <pid.cpp>
+#include <pid.h>
 #include <twi.c>
 #include <twi.h>

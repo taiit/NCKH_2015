@@ -23,10 +23,23 @@ extern float  alpha;
 #define AXIS_Z 2
 
 #define DEFAULT_SENSOR_BETA		0.98
-#define DEFAULT_LPF_BETA_X		0.321  //default lpf_beta
+#define DEFAULT_LPF_BETA_X		0.223  //default lpf_beta
 #define DEFAULT_LPF_BETA_Y		0.223
 #define DEFAULT_LPF_BETA_Z		0.345
 
 extern float angle[MAX_AXIS];
+
+
+//PID control
+#define DEFAULT_PID_P_TERM 1.00
+#define DEFAULT_PID_I_TERM 0.00
+#define DEFAULT_PID_D_TERM 0.02
+#define CUTDOWN(x,y) ((x) - (y)) > 0 ? ((x) - (y)) : 0
+
+typedef struct pid_term_t{
+	float Kp;
+	float Ki;
+	float Kd;
+};
 
 #endif /* GIMBAL_H_ */

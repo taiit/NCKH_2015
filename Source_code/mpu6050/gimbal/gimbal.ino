@@ -11,6 +11,7 @@
 #include <Servo.h>
 #include "lpf.h"
 #include "SerialCommand.h"
+#include "pid.h"
 
 #define arduinoLED 13   // Arduino LED on board
 SerialCommand SCmd;   // The demo SerialCommand object
@@ -18,6 +19,15 @@ float angle[MAX_AXIS];
 Servo servo[MAX_AXIS];
 LPF g_lpf[MAX_AXIS];
 float  alpha = DEFAULT_SENSOR_BETA; //alpha for filer
+
+//PID here
+pid_term_t pid_term[MAX_AXIS];
+//Define Variables we'll be connecting to
+float my_set_point[MAX_AXIS]{0,0,0}; //it like offset
+float my_input[MAX_AXIS]; //parse to angle after filter
+float my_output[MAX_AXIS];//parse to angle for servo after get pid
+pid pidControler[MAX_AXIS];//it is main PID
+//pid myPID(&input_Y, &output_Y, &set_point_axis_Y, Kp, Ki, Kd, DIRECT);
 
 void setup(){
 	int error;
@@ -77,50 +87,141 @@ void setup(){
 	SCmd.addCommand("default",		default_setting);
 	SCmd.addCommand("stop",			stop);
 	SCmd.addCommand("start",		start);
+	SCmd.addCommand("pidx",			PIDX);
+	SCmd.addCommand("pidy",			PIDY);
 	SCmd.addDefaultHandler(			wtf);  // Handler for command that isn't matched  (says "What?")
+	
+	//PID here
+	for(int i = 0; i < MAX_AXIS; i++){
+		pidControler[i].linking(
+			&my_input[i],		// pointing to data input for pid
+			&my_output[i],		// pid output
+			&my_set_point[i],	// set point to get error, default is Zero
+			DIRECT				// non invert output
+		);
+		//pid term
+		pid_term[i].Kp = DEFAULT_PID_P_TERM; // Is default
+		pid_term[i].Ki = DEFAULT_PID_I_TERM; // Is default
+		pid_term[i].Kd = DEFAULT_PID_D_TERM; // Is default
+		
+		pidControler[i].setPIDTunings(pid_term[i].Kp, pid_term[i].Ki, pid_term[i].Kd);
+				
+		pidControler[i].setOutputLimits(-90.0,90.0);	// from -90 to 90 degree
+		pidControler[i].setPIDSampleTime(10);			// sampling time is 10ms
+		pidControler[i].setMode(PID_MODE_RUINING);		// start pid
+	}
 	
 }
 
 void loop(){
-
-	//filer_ter(micros());
-	//delay(100);
-	// scan from 0 to 180 degrees
-	//for(angle = 0; angle < 180; angle++)	{
-		////for(uint8_t i = 0; i < MAX_SERVO; i++){
-			//servo[SERVO_X].write(angle);
-		////}
-		//delay(15);
-	//}
-	//// now scan back from 180 to 0 degrees
-	//for(angle = 180; angle > 0; angle--){
-		////for(uint8_t i = 0; i < MAX_SERVO; i++){
-			//servo[SERVO_X].write(angle);
-		////}
-		//delay(15);
-	//}
 	EVERYMS(10){
-		filer_ter(micros());
 		
-		float lfp_data;
+		complement_filter(micros());
+		
 		for(uint8_t i = 0; i < MAX_AXIS; i++){
-			lfp_data = g_lpf[i].LPF_Caculation(angle[i]);
-			switch(i){
-				case 0: //X
-				servo[AXIS_X].write(90 - (int)lfp_data);
-				break;
-				case 1: //Y
-				servo[AXIS_Y].write(90 - (int)lfp_data);
-				break;
-				case 2: //Z
-				servo[AXIS_Z].write(90 /*+ (int)lfp_data*/);
-				break;
-			}
-		}//End for
+			my_input[i]  = g_lpf[i].LPF_Caculation(angle[i]);								
+		}
+		
 	}//End EVERYMS
 	
-	SCmd.readSerial();     // We don't do much, just process serial commands
-
+	// Like line follow robot :D
+	switch(abs((int)my_input[AXIS_X])){
+		case 1: // -1 < my_input < 1
+			pidControler[AXIS_X].setPIDTunings(
+				CUTDOWN(pid_term[AXIS_X].Kp, 0.6),
+				CUTDOWN(pid_term[AXIS_X].Ki, 1),
+				CUTDOWN(pid_term[AXIS_X].Kd, 1)
+			);
+			break;
+		case 2:
+			pidControler[AXIS_X].setPIDTunings(
+				CUTDOWN(pid_term[AXIS_X].Kp, 0.5),
+				CUTDOWN(pid_term[AXIS_X].Ki, 1),
+				CUTDOWN(pid_term[AXIS_X].Kd, 1)
+			);
+			break;
+		case 3:
+			pidControler[AXIS_X].setPIDTunings(
+			CUTDOWN(pid_term[AXIS_X].Kp, 0.3),
+			CUTDOWN(pid_term[AXIS_X].Ki, 0.3),
+			CUTDOWN(pid_term[AXIS_X].Kd, 0.3)
+			);
+			break;
+		case 4:
+			pidControler[AXIS_X].setPIDTunings(
+				CUTDOWN(pid_term[AXIS_X].Kp, 0.2),
+				CUTDOWN(pid_term[AXIS_X].Ki, 0.2),
+				CUTDOWN(pid_term[AXIS_X].Kd, 0.2)
+			);
+			break;
+		default:
+			pidControler[AXIS_X].setPIDTunings(
+				CUTDOWN(pid_term[AXIS_X].Kp, 0.0),
+				CUTDOWN(pid_term[AXIS_X].Ki, 0.0),
+				CUTDOWN(pid_term[AXIS_X].Kd, 0.0)
+			);
+			break;
+	}// end switch X
+	
+	switch(abs((int)my_input[AXIS_Y])){
+		case 1:
+			pidControler[AXIS_Y].setPIDTunings(
+				CUTDOWN(pid_term[AXIS_Y].Kp, 0.4),
+				CUTDOWN(pid_term[AXIS_Y].Ki, 0.4),
+				CUTDOWN(pid_term[AXIS_Y].Kd, 0.4)
+			);
+			break;
+		case 2:
+			pidControler[AXIS_Y].setPIDTunings(
+				CUTDOWN(pid_term[AXIS_Y].Kp, 0.3),
+				CUTDOWN(pid_term[AXIS_Y].Ki, 0.3),
+				CUTDOWN(pid_term[AXIS_Y].Kd, 0.3)
+			);
+			break;
+		case 3:
+			pidControler[AXIS_Y].setPIDTunings(
+				CUTDOWN(pid_term[AXIS_Y].Kp, 0.2),
+				CUTDOWN(pid_term[AXIS_Y].Ki, 0.2),
+				CUTDOWN(pid_term[AXIS_Y].Kd, 0.2)
+			);
+			break;
+		case 4:
+			pidControler[AXIS_Y].setPIDTunings(
+				CUTDOWN(pid_term[AXIS_Y].Kp, 0.1),
+				CUTDOWN(pid_term[AXIS_Y].Ki, 0.1),
+				CUTDOWN(pid_term[AXIS_Y].Kd, 0.1)
+			);
+			break;
+		default:
+			pidControler[AXIS_Y].setPIDTunings(
+					CUTDOWN(pid_term[AXIS_Y].Kp, 0.0), 
+					CUTDOWN(pid_term[AXIS_Y].Ki, 0.0),
+					CUTDOWN(pid_term[AXIS_Y].Kd, 0.0)
+				);
+			break;
+	}// end switch
+	
+	// Call pid
+	for(uint8_t i = 0; i < MAX_AXIS; i++){
+		if(pidControler[i].compute()){
+			int temp = (int)(my_output[i]);
+			//update pwm
+			switch(i){
+				case 0:
+					servo[AXIS_X].write(90 + temp); // X is 0
+					break;
+				case 1:
+					servo[AXIS_Y].write(90 + temp); // Y is 1
+					break;
+				case 2:
+					servo[AXIS_Z].write(90 /*+ temp*/); // Z is 2
+					break;
+			}// end switch
+			
+		}// end if compute
+	}//end for
+	// Call serial hander
+	SCmd.readSerial();  //just process serial commands	
 }
 //END LOOP
 void out_settingdata(){
@@ -233,6 +334,82 @@ void wtf()
 //Print some importation
 	out_settingdata();
 }
+
+void oud_pidTermData(float Kp, float Ki, float Kd){
+	Serial.print(F("Kp: ")); Serial.println(Kp);
+	Serial.print(F("Ki: ")); Serial.println(Ki);
+	Serial.print(F("Kd: ")); Serial.println(Kd);
+}
+void PIDX(){
+	float fNum;
+	char *arg;
+	//Kp
+	arg = SCmd.next();
+	if (arg != NULL){
+		
+		fNum=atof(arg);    // Converts a char string to a float
+		//		myPID.setPIDTunings(fNum, myPID.getKi(), myPID.getKd());
+	}
+	else {
+		oud_pidTermData(pidControler[AXIS_X].getKp(), pidControler[AXIS_X].getKi(), pidControler[AXIS_X].getKd());
+	}
+	//Ki
+	arg = SCmd.next();
+	if (arg != NULL){
+		
+		fNum=atof(arg);    // Converts a char string to a float
+		//		myPID.setPIDTunings(myPID.getKp(), fNum, myPID.getKd());
+	}
+	else {
+		Serial.println(F("No ki"));
+	}
+	//Kd
+	arg = SCmd.next();
+	if (arg != NULL){
+		
+		fNum=atof(arg);    // Converts a char string to a float
+		//		myPID.setPIDTunings(myPID.getKp(), myPID.getKi(), fNum);
+	}
+	else {
+		Serial.println(F("No kd"));
+	}
+}
+
+void PIDY(){
+	float fNum;
+	char *arg;
+//Kp
+	arg = SCmd.next();
+	if (arg != NULL){
+		
+		fNum=atof(arg);    // Converts a char string to a float
+//		myPID.setPIDTunings(fNum, myPID.getKi(), myPID.getKd());
+	}
+	else {
+		Serial.println(F("No kp"));
+	}
+//Ki
+	arg = SCmd.next();
+	if (arg != NULL){
+		
+		fNum=atof(arg);    // Converts a char string to a float
+//		myPID.setPIDTunings(myPID.getKp(), fNum, myPID.getKd());
+	}
+	else {
+		Serial.println(F("No ki"));
+	}
+//Kd
+	arg = SCmd.next();
+	if (arg != NULL){
+		
+		fNum=atof(arg);    // Converts a char string to a float
+//		myPID.setPIDTunings(myPID.getKp(), myPID.getKi(), fNum);
+	}
+	else {
+		Serial.println(F("No kd"));
+	}
+}
+
 /*
 
 

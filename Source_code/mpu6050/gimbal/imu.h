@@ -54,6 +54,6 @@ typedef union accel_t_gyro_union
 
 void calibrate_sensors();
 
-void filer_ter(unsigned long t_now);
+void complement_filter(unsigned long t_now);
 
 #endif /* IMU_H_ */
